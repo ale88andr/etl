@@ -1,18 +1,32 @@
 """ Module with finctions for transforming data """
 
-def parse_data(movies: list, writers: list):
+import json
+
+
+def transform(movies: list, writers: list):
     """ Funcion parsing data """
     movies_resultset = []
+    writers = [{'id': w['id'], 'name': w['name']} for w in writers]
 
     for movie in movies:
+        actors_ids = movie['actors_ids'].split(',')
+        actors_names = movie['actors_names'].split(',')
+        actors = [{'id': actors_ids[i], 'name': actors_names[i]} for i in range(len(actors_ids))]
+        writers_ids = [movie['writer']] if movie['writer'] else [w['id'] for w in json.loads(movie['writers'])]
+        movie_writers = list(filter(lambda w: w['id'] in writers_ids, writers))
         movies_resultset.append({
             'id': movie['id'],
             'genre': movie['genre'],
+            'title': movie['title'],
             'director': drop_na(movie['director']),
             'description': movie['plot'],
-            'imdb_rating': float(drop_na(movie['imdb_rating'], is_numeral=True)),
-            'actors_ids': movie['actors_ids'].split(','),
-            'actors_names': movie['actors_names'].split(','),
+            'imdb_rating': float(
+                drop_na(movie['imdb_rating'], is_numeral=True)
+            ),
+            'actors': actors,
+            'actors_names': ', '.join(actors_names),
+            'writers': movie_writers,
+            'writers_names': ', '.join(map(lambda w: w['name'], movie_writers))
         })
 
     return movies_resultset
